@@ -1,7 +1,7 @@
 
 var barValue = 0.0;
 
-var bar = new ProgressBar.Line('#progress', {
+/* var bar = new ProgressBar.Line('#progress', {
     strokeWidth: 4,
     easing: 'easeInOut',
     duration: 2000,
@@ -14,7 +14,7 @@ var bar = new ProgressBar.Line('#progress', {
     step: (state, bar) => {
         bar.path.setAttribute('stroke', state.color);
     }
-});
+}); */
 
 function setSummary(minimumTime){
     var ctx = document.getElementById("summary").innerHTML = "<br>Predicted DLMO is " + (minimumTime % 24).toFixed(2) + " hours after midnight on the last day of recording.";
@@ -101,7 +101,7 @@ if (window.File && window.FileReader && window.FileList && window.Blob) {
                 worker.onmessage = function (e) {
                     console.log(e.data);
                     if (typeof e.data === 'number') {
-                        bar.animate(e.data);
+                        // bar.animate(e.data);
                     } else {
                         const {labels, data, minimumTime} = e.data;
                         setPlot(labels, data);
