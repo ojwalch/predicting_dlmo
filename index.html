@@ -1,1 +1,117 @@
-Setting up the Predicting DLMO website
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <title>Phase Calculator</title>
+
+  <!-- Bootstrap core CSS -->
+  <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Custom fonts for this template -->
+  <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="vendor/simple-line-icons/css/simple-line-icons.css">
+  <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:300" rel="stylesheet">
+
+
+  <!-- Custom styles for this template -->
+  <link href="css/new-age.css" rel="stylesheet">
+
+</head>
+
+<body id="page-top">
+
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+    <div class="container">
+      <a class="navbar-brand js-scroll-trigger" href="#page-top">Phase Calculator</a>
+      <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+        Menu
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarResponsive">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <a class="nav-link js-scroll-trigger" href="#about">About</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link js-scroll-trigger" href="http://www.github.com/ojwalch/predicting_dlmo">Source Code</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <header class="masthead">
+    <div class="container h-100">
+      <div class="row h-100">
+        <div class="col-lg-6 my-auto">
+          <div class="header-content mx-auto">
+            <h1 class="mb-5">Predict DLMO with math modeling</h1>
+            <div class="upload-wrapper">
+                <header>
+                    <label class="btn btn-outline btn-xl">
+
+                    <input type="file" onchange="showFile()">
+                        Upload csv file
+                        </label>
+                        </header>
+                <div id="show-text"></div>
+            </div>
+            
+            
+          </div>
+        </div>
+        <div class="col-lg-6 my-auto">
+            <canvas id="circadianChart" width="100%" height="50%"></canvas><br>
+            <div class="progress" id="progress"></div>
+            <div class="summary" id="summary"></div>
+
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="download bg-primary text-center" id="about">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-8 mx-auto">
+          <h2 class="section-heading">About</h2>
+          <p>This website uses a mathematical model of the circadian clock to predict timing of DLMO.
+              You can download the template for your actigraphy data <a href="template.csv">here</a> and sample data <a href="sample.csv">here</a>. We don't store any of the data you upload. </p>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>Code used to make calculations available <a href="http://www.github.com/ojwalch/predicting_dlmo">on Github</a>.</p>
+    </div>
+  </footer>
+
+  <!-- Bootstrap core JavaScript -->
+  <script src="vendor/jquery/jquery.min.js"></script>
+  <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Plugin JavaScript -->
+  <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+
+  <!-- Custom scripts for this template -->
+  <script src="js/new-age.min.js"></script>
+  <script src="node_modules/chart.js/dist/Chart.js"></script>
+  <script src="node_modules/progressbar.js/dist/progressbar.min.js"></script>
+  <script type="text/javascript" src="js/models.js"></script>
+
+  <script type="text/javascript" src="js/read_file.js"></script>
+
+</body>
+
+</html>
