@@ -106,7 +106,7 @@ function showFile() {
             var file = files[j];
             let filename = file.name;
 
-            var reader = new FileReader()
+            var reader = new FileReader();
             var textFile = /text.*/;
             var excelFile = /application.*/;
 
