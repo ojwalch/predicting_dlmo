@@ -108,6 +108,7 @@ if (window.File && window.FileReader && window.FileList && window.Blob) {
             var reader = new FileReader()
             var textFile = /text.*/;
 
+            console.log(file);
             if (file.type.match(textFile)) {
                 reader.onload = function (event) {
 
