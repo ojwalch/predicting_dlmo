@@ -16,8 +16,16 @@ var barValue = 0.0;
     }
 }); */
 
-function setSummary(minimumTime){
-    var ctx = document.getElementById("summary").innerHTML = "<br>Predicted DLMO is " + (minimumTime % 24).toFixed(2) + " hours after midnight on the last day of recording.";
+function setSummary(minimumTime) {
+    //var ctx = document.getElementById("summary").innerHTML = "<br>Predicted DLMO is " + (minimumTime % 24).toFixed(2) + " hours after midnight on the last day of recording.";
+    
+    var ctx = document.getElementById("summary").innerHTML += ", " + (minimumTime % 24).toFixed(2) + "";
+}
+
+
+function setFilename(filename) {
+
+    var ctx = document.getElementById("summary").innerHTML += "<br>" + filename; 
 }
 
 function setPlot(labels, data) {
@@ -87,39 +95,43 @@ function setPlot(labels, data) {
 
 if (window.File && window.FileReader && window.FileList && window.Blob) {
 
-
     function showFile() {
         var preview = document.getElementById('show-text');
-        var file = document.querySelector('input[type=file]').files[0];
-        var reader = new FileReader()
-        var textFile = /text.*/;
 
-        if (file.type.match(textFile)) {
-            reader.onload = function (event) {
+        var files = document.querySelector('input[type=file]').files;
+        var ctx = document.getElementById("summary").innerHTML = "<b>Uploaded file name, Predicted DLMO </b><br>";
 
-                var worker = new Worker('./js/prep_data.js');
-                worker.onmessage = function (e) {
-                    console.log(e.data);
-                    if (typeof e.data === 'number') {
-                        // bar.animate(e.data);
-                    } else {
-                        const {labels, data, minimumTime} = e.data;
-                        setPlot(labels, data);
-                        console.log(minimumTime);
-                        console.log(labels);
-                        setSummary(minimumTime);
-                    }
+        for (let j = 0; j < files.length; j++){
+            var file = files[j];
+            let filename = file.name;
 
-                };
+            var reader = new FileReader()
+            var textFile = /text.*/;
 
-                let rawData = event.target.result;
+            if (file.type.match(textFile)) {
+                reader.onload = function (event) {
 
-                worker.postMessage(rawData);
+                    var worker = new Worker('./js/prep_data.js');
+                    worker.onmessage = function (e) {
+                        if (typeof e.data === 'number') {
+                            // bar.animate(e.data);
+                        } else {
+                            const {filename, labels, data, minimumTime} = e.data;
+                            // setPlot(labels, data);
+                            setFilename(filename);
+                            setSummary(minimumTime);
+                        }
+                    };
+
+                    let rawData = event.target.result;
+
+                    worker.postMessage({rawData, filename});
+                }
+            } else {
+                preview.innerHTML = "<span class='error'>It doesn't seem to be a text file!</span>";
             }
-        } else {
-            preview.innerHTML = "<span class='error'>It doesn't seem to be a text file!</span>";
+            reader.readAsText(file);
         }
-        reader.readAsText(file);
     }
 } else {
     alert("Your browser is too old to support HTML5 File API");

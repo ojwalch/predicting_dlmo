@@ -5,72 +5,127 @@ function processRawData(rawData) {
     let times = [];
     let light = [];
     let counts = [];
+    let sleepWake = [];
 
+    let dateIndex = 2;
+    let timeIndex = 3;
+    let activityIndex = 5;
+    let whiteLightIndex = 7;
 
-    for (let i = 1; i < splitByLines.length; i++) {
-        let row = splitByLines[i].split(",");
+    let headerRow = splitByLines[0].split(",");
+    let sleepWakeIndex = headerRow.length - 2;
 
-        dates[i] = row[0];
-        times[i] = row[1];
-        light[i] = parseFloat(row[3]);
-        counts[i] = parseFloat(row[2]);
+    for (let i = 0; i < headerRow.length; i++){
+        if (headerRow[i] == "Activity"){
+            activityIndex = i;
+        }
+        if (headerRow[i] == "White Light"){
+            whiteLightIndex = i;
+        }
+        
+        if (headerRow[i] == "Sleep/Wake"){
+            sleepWakeIndex = i;
+        }
+                
+        if (headerRow[i] == "Date"){
+            dateIndex = i;
+        }
+          
+        if (headerRow[i] == "Time"){
+            timeIndex = i;
+        }
     }
+    
+    
+    for (let i = 1; i < splitByLines.length; i++) {
+        
+        let row = splitByLines[i].split(",");
+        dates[i-1] = row[dateIndex];
+        times[i-1] = row[timeIndex];
 
-    return {dates, times, light, counts}
+        var timestamp = Date.parse(row[dateIndex] + " " + row[timeIndex]);
+        times[i-1] = timestamp;
+        light[i-1] = parseFloat(row[whiteLightIndex]);
+        counts[i-1] = parseFloat(row[activityIndex]);
+        sleepWake[i-1] = parseFloat(row[sleepWakeIndex]);
+
+    }
+    return {dates, times, light, counts, sleepWake}
 }
 
 
-function formatDataForIntegration(dates, times, counts) {
+function formatDataForIntegration(dates, times, counts, sleepWake) {
     let cumulativeSum = 0;
     let timeInHours = [];
     let countsIndexedByHours = [];
+    let sleepWakeIndexedByHours = [];
+
     let counter = 0;
 
+    // Loop over all epochs and store points with valid values in arrays
     for (let i = 0; i < counts.length; i++) {
-        let timestamp = (parseFloat(dates[i]) + parseFloat(times[i])) * 24;
-
-        if (!isNaN(counts[i]) && !isNaN(timestamp)) {
+        let timestamp = (times[i])/(1000.0*3600.0);
+        
+        if(isNaN(counts[i])){
+           counts[i] = 0;
+        }
+           
+        if (isNaN(sleepWake[i])){
+            sleepWake[i] = 0;
+        }
+        
+        if (!isNaN(timestamp)) {
             cumulativeSum = cumulativeSum + counts[i];
             countsIndexedByHours[counter] = counts[i];
             timeInHours[counter] = timestamp;
+            sleepWakeIndexedByHours[counter] = sleepWake[i];
             counter = counter + 1
         }
     }
-
-
+    
+    // Get first valid timestamp
     let firstTimestamp = timeInHours[0];
     for (let i = 0; i < timeInHours.length; i++) {
         timeInHours[i] = timeInHours[i] - firstTimestamp;
     }
 
-
+    // Resample data to fill any gaps
     let totalMinutes = 60 * timeInHours[timeInHours.length - 1];
-    let timeInMinutes = [];
-    let countsInMinutes = [];
+    
+    let minuteByMinuteTime = [];
+    let minuteByMinuteActivityCounts = [];
+    let minuteByMinuteSleepWake = [];
 
     let minuteCounter = 0.0;
     let startTimeForCounts = 0;
     for (let i = 0; i < totalMinutes; i++) {
-        timeInMinutes[i] = minuteCounter / 60.0;
+        
+        // Store current minute (time unit is still hours)
+        minuteByMinuteTime[i] = minuteCounter / 60.0;
         let countValue = 0;
+        let sleepValue = 0;
 
+        // Interpolate 
         for (let j = startTimeForCounts; j < countsIndexedByHours.length - 1; j++) {
 
             if (timeInHours[j] * 60 <= minuteCounter && timeInHours[j + 1] * 60 > minuteCounter) {
                 let fractionComplete = (minuteCounter / 60.0 - timeInHours[j]) / (timeInHours[j + 1] - timeInHours[j]);
                 countValue = countsIndexedByHours[j] + fractionComplete * (countsIndexedByHours[j + 1] - countsIndexedByHours[j]);
+                sleepValue = sleepWakeIndexedByHours[j] + fractionComplete * (sleepWakeIndexedByHours[j + 1] - sleepWakeIndexedByHours[j]);
                 startTimeForCounts = j;
                 break;
             }
         }
 
-        countsInMinutes[i] = countValue;
+        
+        minuteByMinuteActivityCounts[i] = countValue;
+        minuteByMinuteSleepWake[i] = Math.round(sleepValue);
 
         minuteCounter = minuteCounter + 1.0;
 
     }
-
-    return {timeInMinutes, countsInMinutes, firstTimestamp}
+    
+    return {minuteByMinuteTime, minuteByMinuteActivityCounts, minuteByMinuteSleepWake, firstTimestamp}
 
 }
 
@@ -79,7 +134,8 @@ function getDataForPlot(output, firstTimestamp) {
     let data = [];
     let stepCounter = 0;
     let labels = [];
-    let lengthOfDay = 24/DELTA_T;
+    let lengthOfDay = 24.0/DELTA_T;
+    let dlmoOffset = 7;
     
     for (let i = 0; i < output.length; i = i + 500) {
         let array = output[i];
@@ -89,17 +145,34 @@ function getDataForPlot(output, firstTimestamp) {
         stepCounter = stepCounter + 1;
     }
     
-    let minimumTime = -1;
+    let minimumTime = -24;
+    let minimumValue = 100;
     for (let i = output.length - lengthOfDay + 1; i < output.length - 1; i = i + 1) {
-        
+    //    for (let i = 1; i < output.length - 1; i = i + 1) {
+   
         let arrayCurrentStep = output[i];
         let arrayPastStep = output[i - 1];
         let arrayNextStep = output[i + 1];
 
         if (arrayPastStep[0] > arrayCurrentStep[0] && arrayCurrentStep[0] < arrayNextStep[0]){
-            minimumTime = i * DELTA_T + (firstTimestamp % 24);
+            let tempMinimumTime = i * DELTA_T + (firstTimestamp % 24) - dlmoOffset;
+            let tempMinimumValue = arrayCurrentStep[0];
+            
+            if(tempMinimumTime > minimumTime + 12){ // If enough time has passed since the last time
+                minimumValue = 100;
+            }
+            
+            if (tempMinimumValue < minimumValue && tempMinimumValue < 0){
+                minimumValue = tempMinimumValue;
+                minimumTime = i * DELTA_T;
+            }
         }
     }
+    
+    var dt = new Date(firstTimestamp*3600*1000); // Convert hours to milliseconds
+    let offset = (dt.getTimezoneOffset())/60.0; // Convert minutes to hours 
+
+    minimumTime = minimumTime + ((firstTimestamp - offset - dlmoOffset + 24) % 24) ;
     
     return {data, labels, minimumTime}
 }
@@ -108,25 +181,15 @@ function getDataForPlot(output, firstTimestamp) {
 onmessage = function (e) {
     self.importScripts("models.js");
 
-    let rawData = e.data;
-
-    postMessage(0.1);
-
-    const {dates, times, light, counts} = processRawData(rawData);
-
-    postMessage(0.3);
-
-    const {timeInMinutes, countsInMinutes, firstTimestamp} = formatDataForIntegration(dates, times, counts);
-
-    postMessage(0.5);
-
-    let output = getCircadianOutput(timeInMinutes, countsInMinutes, countsInMinutes, firstTimestamp);
-
-    postMessage(0.8);
+    const {rawData, filename} = e.data;
+    
+    const {dates, times, light, counts, sleepWake} = processRawData(rawData);
+    
+    const {minuteByMinuteTime, minuteByMinuteActivityCounts, minuteByMinuteSleepWake, firstTimestamp} = formatDataForIntegration(dates, times, counts, sleepWake);
+    
+    let output = getCircadianOutput(minuteByMinuteTime, minuteByMinuteActivityCounts, minuteByMinuteSleepWake, firstTimestamp);
 
     const {labels, data, minimumTime} = getDataForPlot(output, firstTimestamp);
 
-    postMessage(1.0);
-
-    postMessage({labels, data, minimumTime});
+    postMessage({filename, labels, data, minimumTime});
 }

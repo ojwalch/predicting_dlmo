@@ -1,3 +1,3 @@
-Date,Time,Activity,White Light
-Day (as number),Format: fraction of day (0-1),Activity counts,Lux
-0, 0.1,100,1000
+Date,Time,Activity,White Light,Sleep/Wake
+1/2/3030, 12:42:10 PM,100,10.0,1
+[Date],[Time],[Activity Counts],[Lux],[1 = Wake, 0 = Sleep]
