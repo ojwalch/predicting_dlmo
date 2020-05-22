@@ -107,9 +107,10 @@ if (window.File && window.FileReader && window.FileList && window.Blob) {
 
             var reader = new FileReader()
             var textFile = /text.*/;
+            var excelFile = /application.*/;
 
             console.log(file);
-            if (file.type.match(textFile)) {
+            if (file.type.match(textFile) || file.type.match(excelFile)) {
                 reader.onload = function (event) {
 
                     var worker = new Worker('./js/prep_data.js');
