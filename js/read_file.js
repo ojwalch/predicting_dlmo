@@ -93,9 +93,10 @@ function setPlot(labels, data) {
 }
 
 
-if (window.File && window.FileReader && window.FileList && window.Blob) {
+function showFile() {
+    
+    if (window.File && window.FileReader && window.FileList && window.Blob) {
 
-    function showFile() {
         var preview = document.getElementById('show-text');
 
         var files = document.querySelector('input[type=file]').files;
@@ -134,7 +135,7 @@ if (window.File && window.FileReader && window.FileList && window.Blob) {
             }
             reader.readAsText(file);
         }
+    } else {
+        alert("Your browser is too old to support HTML5 File API");
     }
-} else {
-    alert("Your browser is too old to support HTML5 File API");
 }
