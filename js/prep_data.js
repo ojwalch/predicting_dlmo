@@ -54,12 +54,14 @@ function processRawData(rawData) {
 }
 
 
-function formatDataForIntegration(dates, times, counts, sleepWake) {
+function formatDataForIntegration(dates, times, light, counts, sleepWake) {
     let cumulativeSum = 0;
     let timeInHours = [];
+    let lightIndexedByHours = [];
     let countsIndexedByHours = [];
+    let combinedIndexedByHours = [];
     let sleepWakeIndexedByHours = [];
-
+    let LIGHT_THRESHOLD = 100;
     let counter = 0;
 
     // Loop over all epochs and store points with valid values in arrays
@@ -69,6 +71,10 @@ function formatDataForIntegration(dates, times, counts, sleepWake) {
         if(isNaN(counts[i])){
            counts[i] = 0;
         }
+        
+        if(isNaN(light[i])){
+           light[i] = 0;
+        }
            
         if (isNaN(sleepWake[i])){
             sleepWake[i] = 0;
@@ -77,6 +83,13 @@ function formatDataForIntegration(dates, times, counts, sleepWake) {
         if (!isNaN(timestamp)) {
             cumulativeSum = cumulativeSum + counts[i];
             countsIndexedByHours[counter] = counts[i];
+            lightIndexedByHours[counter] = light[i];
+            combinedIndexedByHours[counter] = light[i];
+            
+            if (light[i] < LIGHT_THRESHOLD && counts[i] > 0){
+                combinedIndexedByHours[counter] = counts[i];
+            }
+            
             timeInHours[counter] = timestamp;
             sleepWakeIndexedByHours[counter] = sleepWake[i];
             counter = counter + 1
@@ -93,9 +106,10 @@ function formatDataForIntegration(dates, times, counts, sleepWake) {
     let totalMinutes = 60 * timeInHours[timeInHours.length - 1];
     
     let minuteByMinuteTime = [];
-    let minuteByMinuteActivityCounts = [];
+    let minuteByMinuteModelInput = [];
     let minuteByMinuteSleepWake = [];
 
+    let inputIndexedByHours = combinedIndexedByHours;
     let minuteCounter = 0.0;
     let startTimeForCounts = 0;
     for (let i = 0; i < totalMinutes; i++) {
@@ -110,7 +124,7 @@ function formatDataForIntegration(dates, times, counts, sleepWake) {
 
             if (timeInHours[j] * 60 <= minuteCounter && timeInHours[j + 1] * 60 > minuteCounter) {
                 let fractionComplete = (minuteCounter / 60.0 - timeInHours[j]) / (timeInHours[j + 1] - timeInHours[j]);
-                countValue = countsIndexedByHours[j] + fractionComplete * (countsIndexedByHours[j + 1] - countsIndexedByHours[j]);
+                countValue = inputIndexedByHours[j] + fractionComplete * (inputIndexedByHours[j + 1] - inputIndexedByHours[j]);
                 sleepValue = sleepWakeIndexedByHours[j] + fractionComplete * (sleepWakeIndexedByHours[j + 1] - sleepWakeIndexedByHours[j]);
                 startTimeForCounts = j;
                 break;
@@ -118,14 +132,14 @@ function formatDataForIntegration(dates, times, counts, sleepWake) {
         }
 
         
-        minuteByMinuteActivityCounts[i] = countValue;
+        minuteByMinuteModelInput[i] = countValue;
         minuteByMinuteSleepWake[i] = Math.round(sleepValue);
 
         minuteCounter = minuteCounter + 1.0;
 
     }
     
-    return {minuteByMinuteTime, minuteByMinuteActivityCounts, minuteByMinuteSleepWake, firstTimestamp}
+    return {minuteByMinuteTime, minuteByMinuteModelInput, minuteByMinuteSleepWake, firstTimestamp}
 
 }
 
@@ -185,9 +199,9 @@ onmessage = function (e) {
     
     const {dates, times, light, counts, sleepWake} = processRawData(rawData);
     
-    const {minuteByMinuteTime, minuteByMinuteActivityCounts, minuteByMinuteSleepWake, firstTimestamp} = formatDataForIntegration(dates, times, counts, sleepWake);
+    const {minuteByMinuteTime, minuteByMinuteModelInput, minuteByMinuteSleepWake, firstTimestamp} = formatDataForIntegration(dates, times, light, counts, sleepWake);
     
-    let output = getCircadianOutput(minuteByMinuteTime, minuteByMinuteActivityCounts, minuteByMinuteSleepWake, firstTimestamp);
+    let output = getCircadianOutput(minuteByMinuteTime, minuteByMinuteModelInput, minuteByMinuteSleepWake, firstTimestamp);
 
     const {labels, data, minimumTime} = getDataForPlot(output, firstTimestamp);
 
