@@ -66,7 +66,7 @@ function formatDataForIntegration(dates, times, light, counts, sleepWake) {
 
     // Loop over all epochs and store points with valid values in arrays
     for (let i = 0; i < counts.length; i++) {
-        let timestamp = (times[i])/(1000.0*3600.0);
+        let timestamp = (times[i])/(1000.0 * 3600.0);
         
         if(isNaN(counts[i])){
            counts[i] = 0;
@@ -162,7 +162,6 @@ function getDataForPlot(output, firstTimestamp) {
     let minimumTime = -24;
     let minimumValue = 100;
     for (let i = output.length - lengthOfDay + 1; i < output.length - 1; i = i + 1) {
-    //    for (let i = 1; i < output.length - 1; i = i + 1) {
    
         let arrayCurrentStep = output[i];
         let arrayPastStep = output[i - 1];
@@ -183,8 +182,8 @@ function getDataForPlot(output, firstTimestamp) {
         }
     }
     
-    var dt = new Date(firstTimestamp*3600*1000); // Convert hours to milliseconds
-    let offset = (dt.getTimezoneOffset())/60.0; // Convert minutes to hours 
+    var dt = new Date(firstTimestamp * 3600 * 1000); // Convert hours to milliseconds
+    let offset = (dt.getTimezoneOffset()) / 60.0; // Convert minutes to hours
 
     minimumTime = minimumTime + ((firstTimestamp - offset - dlmoOffset + 24) % 24) ;
     

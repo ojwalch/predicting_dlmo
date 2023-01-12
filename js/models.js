@@ -252,8 +252,8 @@ function cropOutput(output, numHoursFromEndToInclude) {
 
 function getICFromLimitCycleAtTime(time){
     
-    var dt = new Date(time*3600*1000); // Convert hours to milliseconds
-    let offset = (dt.getTimezoneOffset())/60.0; // Convert minutes to hours 
+    var dt = new Date(time * 3600 * 1000); // Convert hours to milliseconds
+    let offset = 0; // No timezone offset for IC-- add only at the end
 
     let DT_LIMIT_CYCLE = 0.1;
     let limitCycle = [[ -0.310000, -1.310000, 0.730000],
