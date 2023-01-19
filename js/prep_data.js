@@ -89,7 +89,6 @@ function formatDataForIntegration(dates, times, light, counts, sleepWake) {
             if (light[i] < LIGHT_THRESHOLD && counts[i] > 0){
                 combinedIndexedByHours[counter] = counts[i];
             }
-            
             timeInHours[counter] = timestamp;
             sleepWakeIndexedByHours[counter] = sleepWake[i];
             counter = counter + 1
@@ -181,11 +180,8 @@ function getDataForPlot(output, firstTimestamp) {
             }
         }
     }
-    
-    var dt = new Date(firstTimestamp * 3600 * 1000); // Convert hours to milliseconds
-    let offset = (dt.getTimezoneOffset()) / 60.0; // Convert minutes to hours
-
-    minimumTime = minimumTime + ((firstTimestamp - offset - dlmoOffset + 24) % 24) ;
+                  
+    minimumTime = minimumTime + ((firstTimestamp - dlmoOffset + 24) % 24) ;
     
     return {data, labels, minimumTime}
 }
