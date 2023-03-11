@@ -1,5 +1,3 @@
-
-
 function setSummary(minimumTime) {
     var ctx = document.getElementById("summary").innerHTML += ", " + (minimumTime % 24).toFixed(2) + "";
 }

@@ -90,7 +90,6 @@ function formatDataForIntegration(dates, times, light, counts, sleepWake) {
             if (light[i] < LIGHT_THRESHOLD && counts[i] > 0){
                 combinedIndexedByHours[counter] = counts[i];
             }
-            
             timeInHours[counter] = timestamp;
             sleepWakeIndexedByHours[counter] = sleepWake[i];
             counter = counter + 1
