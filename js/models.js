@@ -1,8 +1,6 @@
 let DELTA_T = 1/60.0;
 let MILLIS_PER_HOUR = 60.0 * 60.0 * 1000.0;
 let MILLIS_PER_MINUTE = 60.0 * 1000.0;
-let DEFAULT_LIGHT_VALUE = 500.0;
-let LIGHT_SCALAR = 10.0;
 var localLD;
 var localSW;
 
@@ -49,29 +47,6 @@ function populateLightFromStepsAndSleep(timestamps, steps, sleep) {
     }
 }
 
-function populateLightDarkWithFixedSchedule(wakeHour, bedHour, durationInHours) {
-
-    let lightArrayLength = (durationInHours / DELTA_T);
-    localLD = new Array(lightArrayLength + 1);
-
-    for (let i = 0; i < lightArrayLength + 1; i++) {
-
-        let hour = i % lightArrayLength;
-        let lightValue = DEFAULT_LIGHT_VALUE;
-        if (wakeHour < bedHour) {                 // e.g. wakeHour = 8, bedHour = 23
-            if (hour < wakeHour / DELTA_T || hour >= bedHour / DELTA_T) {
-                lightValue = 0;
-            }
-        } else {
-            if (hour < wakeHour / DELTA_T && hour >= bedHour / DELTA_T) { // e.g. wakeHour = 10, bedHour = 2
-                lightValue = 0;
-            }
-        }
-
-        localLD[i] = lightValue * LIGHT_SCALAR + 200;
-
-    }
-}
 
 function alphForger(I) {
 
@@ -87,7 +62,7 @@ function alphNonPhotic(I){
     let p = 0.5;
     let a0 = 0.1;
         
-    return a0*(Math.pow(I/I0,p))*(I/(I+100));
+    return a0 * (Math.pow(I / I0, p)) * (I / (I + 100));
 }
 
 
@@ -151,7 +126,7 @@ function clockModel_HilaireNonPhotic(t, y) {
     let Bh = G * (1 - n) * alphNonPhotic(I);
     let B = Bh * (1 - .4 * x) * (1 - .4 * xc);
 
-        // Subtract from 1 to make the sign work
+    // Subtract from 1 to make the sign work
     // From St. Hilaire (2007): sigma equals either 1 (for sleep/rest) or 0 (for wake/activity),
     let sigma = 1 - sleepWakeStatus;
     if (sigma < 1/2){
@@ -168,7 +143,6 @@ function clockModel_HilaireNonPhotic(t, y) {
     }else{
         Ns = Nsh*(1 - Math.tanh(10*x));
     }
-        
 
     let dydt = [0, 0, 0];
 
@@ -227,14 +201,9 @@ function getCircadianOutput(timestamps, steps, sleep, firstTimestamp) {
     let durationInHours = Math.round((timestamps[lengthOfTimestamps - 1] - timestamps[0]));
     
     populateLightFromStepsAndSleep(timestamps, steps, sleep);
-    // let initialConditions = new Array(3);
-    // initialConditions[0] = 2.0 * Math.random() - 1.0;
-    // initialConditions[1] = 2.0 * Math.random() - 1.0;
-    // initialConditions[2] = Math.random();
     let initialConditions = getICFromLimitCycleAtTime(firstTimestamp);
         
     let output = rk4(durationInHours, initialConditions);
-    // output = cropOutput(output, 72);
 
     return output;
 }
@@ -252,10 +221,11 @@ function cropOutput(output, numHoursFromEndToInclude) {
 
 function getICFromLimitCycleAtTime(time){
     
-    var dt = new Date(time*3600*1000); // Convert hours to milliseconds
-    let offset = (dt.getTimezoneOffset())/60.0; // Convert minutes to hours 
+    var dt = new Date(time * 3600 * 1000); // Convert hours to milliseconds
+    let firstTimestampInHoursInUTC = dt.getUTCHours() + dt.getUTCMinutes() / 60.0 ;
 
     let DT_LIMIT_CYCLE = 0.1;
+
     let limitCycle = [[ -0.310000, -1.310000, 0.730000],
     [ -0.345821, -1.301471, 0.700016],
     [ -0.381504, -1.292040, 0.671227],
@@ -497,6 +467,7 @@ function getICFromLimitCycleAtTime(time){
     [ -0.258323, -1.322845, 0.731986],
     [ -0.284301, -1.318261, 0.731986],
     [ -0.310000, -1.310000, 0.730000]];    
-    index = Math.floor(((time - offset + 24)  % 24)/DT_LIMIT_CYCLE);
+
+    index = Math.floor(((firstTimestampInHoursInUTC + 24)  % 24) / DT_LIMIT_CYCLE);
     return limitCycle[index];
 }

@@ -43,7 +43,8 @@ function processRawData(rawData) {
         dates[i-1] = row[dateIndex];
         times[i-1] = row[timeIndex];
 
-        var timestamp = Date.parse(row[dateIndex] + " " + row[timeIndex]);
+        // Load time in GMT
+        var timestamp = Date.parse(row[dateIndex] + " " + row[timeIndex] + " GMT");
         times[i-1] = timestamp;
         light[i-1] = parseFloat(row[whiteLightIndex]);
         counts[i-1] = parseFloat(row[activityIndex]);
@@ -66,7 +67,7 @@ function formatDataForIntegration(dates, times, light, counts, sleepWake) {
 
     // Loop over all epochs and store points with valid values in arrays
     for (let i = 0; i < counts.length; i++) {
-        let timestamp = (times[i])/(1000.0*3600.0);
+        let timestamp = (times[i]) / (1000.0 * 3600.0);
         
         if(isNaN(counts[i])){
            counts[i] = 0;
@@ -145,24 +146,15 @@ function formatDataForIntegration(dates, times, light, counts, sleepWake) {
 
 
 function getDataForPlot(output, firstTimestamp) {
-    let data = [];
-    let stepCounter = 0;
-    let labels = [];
-    let lengthOfDay = 24.0/DELTA_T;
-    let dlmoOffset = 7;
+
     
-    for (let i = 0; i < output.length; i = i + 500) {
-        let array = output[i];
-        data[stepCounter] = array[0];
-        let currentTime = i * DELTA_T + (firstTimestamp % 24);
-        labels[stepCounter] = currentTime.toFixed(2);
-        stepCounter = stepCounter + 1;
-    }
+    let lengthOfDay = 24.0 / DELTA_T;
+    let dlmoOffset = 7;
+  
     
     let minimumTime = -24;
-    let minimumValue = 100;
+    let minimumValue = 99999999;
     for (let i = output.length - lengthOfDay + 1; i < output.length - 1; i = i + 1) {
-    //    for (let i = 1; i < output.length - 1; i = i + 1) {
    
         let arrayCurrentStep = output[i];
         let arrayPastStep = output[i - 1];
@@ -172,8 +164,8 @@ function getDataForPlot(output, firstTimestamp) {
             let tempMinimumTime = i * DELTA_T + (firstTimestamp % 24) - dlmoOffset;
             let tempMinimumValue = arrayCurrentStep[0];
             
-            if(tempMinimumTime > minimumTime + 12){ // If enough time has passed since the last time
-                minimumValue = 100;
+            if(tempMinimumTime > minimumTime + 12){  // If enough time has passed since the last time
+                minimumValue = 99999999;
             }
             
             if (tempMinimumValue < minimumValue && tempMinimumValue < 0){
@@ -183,12 +175,12 @@ function getDataForPlot(output, firstTimestamp) {
         }
     }
     
-    var dt = new Date(firstTimestamp*3600*1000); // Convert hours to milliseconds
-    let offset = (dt.getTimezoneOffset())/60.0; // Convert minutes to hours 
+    var dt = new Date(firstTimestamp * 3600 * 1000); // Convert hours to milliseconds
+    let utcHours = dt.getUTCHours() + dt.getUTCMinutes() / 60.0 ;
 
-    minimumTime = minimumTime + ((firstTimestamp - offset - dlmoOffset + 24) % 24) ;
+    minimumTime = minimumTime + ((utcHours - dlmoOffset + 24) % 24) ;
     
-    return {data, labels, minimumTime}
+    return { minimumTime }
 }
 
 
@@ -203,7 +195,7 @@ onmessage = function (e) {
     
     let output = getCircadianOutput(minuteByMinuteTime, minuteByMinuteModelInput, minuteByMinuteSleepWake, firstTimestamp);
 
-    const {labels, data, minimumTime} = getDataForPlot(output, firstTimestamp);
+    const {minimumTime} = getDataForPlot(output, firstTimestamp);
 
-    postMessage({filename, labels, data, minimumTime});
+    postMessage({filename, minimumTime});
 }
