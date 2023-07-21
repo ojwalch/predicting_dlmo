@@ -136,13 +136,12 @@ function clockModel_HilaireNonPhotic(t, y) {
         sigma = 1;
     }
 
-    let Nsh = rho*(1/3 - sigma);
+    let Nsh = rho * (1/3 - sigma);
     
     if (psi_cx > 16.5 && psi_cx < 21){
-        Ns = rho*(1/3);
-    }else{
-        Ns = Nsh*(1 - Math.tanh(10*x));
+        Nsh = rho * (1/3);
     }
+    Ns = Nsh*(1 - Math.tanh(10 * x));
 
     let dydt = [0, 0, 0];
 
